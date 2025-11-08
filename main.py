@@ -1,5 +1,4 @@
 import dns.resolver
-# from dns.resolver import get_default_resolver
 from dns.resolver import CacheBase
 
 resolver = dns.resolver.get_default_resolver()

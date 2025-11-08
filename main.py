@@ -1,21 +1,17 @@
-import dns.resolver
+import subprocess
 
-def dns_lookup(domain: str, record_type: str) -> list[str]:
-    
-    resolver = dns.resolver.get_default_resolver()
-    answers = resolver.resolve(domain, record_type)
-    return [answer.to_text() for answer in answers]
+subprocess.run('ipconfig /displaydns > "C:\\Users\\Krish Vij\\dns.txt"', text=True, shell = True)
+
+def check_dns_records() -> None:
+    with open ("C:\\Users\\Krish Vij\\dns.txt", "r") as file:
+        contents = file.read()
+        for line in contents.splitlines():
+            if "Record Name . . . . . : google.com" in line :
+                print("Found google.com DNS record")
+    print(contents)
 
 def main() -> None:
-    domain = 'google.com'
-    record_type = 'A'
-    try:
-        results = dns_lookup(domain, record_type)
-        print(f'{record_type} records for {domain}:')
-        for result in results:
-            print(result)
-    except Exception as e:
-        print(f'Error occurred: {e}')
+    check_dns_records()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

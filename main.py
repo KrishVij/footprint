@@ -1,13 +1,21 @@
 import dns.resolver
-from dns.resolver import CacheBase
 
-resolver = dns.resolver.get_default_resolver()
-CacheBase = CacheBase()
-how_many_hits = CacheBase.hits()
+def dns_lookup(domain: str, record_type: str) -> list[str]:
+    
+    resolver = dns.resolver.get_default_resolver()
+    answers = resolver.resolve(domain, record_type)
+    return [answer.to_text() for answer in answers]
 
-ip_address = dns.resolver.resolve('google.com', 'A')[0].to_text()
+def main() -> None:
+    domain = 'google.com'
+    record_type = 'A'
+    try:
+        results = dns_lookup(domain, record_type)
+        print(f'{record_type} records for {domain}:')
+        for result in results:
+            print(result)
+    except Exception as e:
+        print(f'Error occurred: {e}')
 
-print("Cache Hits:", how_many_hits)
-print("IP Address:", ip_address)
-
-
+if __name__ == '__main__':
+    main()

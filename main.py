@@ -1,4 +1,6 @@
 import subprocess
+import dns.resolver
+from dns.resolver import Resolver
 
 def check_dns_records(domain:str) -> bool:
     """Check DNS records for a given domain in the local DNS cache."""
@@ -18,13 +20,19 @@ def check_dns_records(domain:str) -> bool:
                     
     return False
 
-#def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
+def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
+    resolver = Resolver()
+    resolver.nameservers = ['8.8.8.8']
+    answer = dns.resolver.resolve(domain, record_type)[0].to_text() # type: ignore[reportUnknownMemberType]
+    print(f"{record_type} record for {domain} from open resolver: {answer}")
+    
 
 def main() -> None:
     domain = input("Enter the domain to check DNS records for: ")
     found = check_dns_records(domain)
     if not found:
         print(f"No relevant DNS records found for {domain}.")
+        query_dns_record_to_open_resolver(domain, "A")
 
 if __name__ == "__main__":
     main()

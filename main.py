@@ -1,9 +1,7 @@
 import subprocess
-# import dns.resolver
 import dns.message
 import dns.flags
 import dns.query
-# from dns.resolver import Resolver
 
 def check_dns_records(domain:str) -> bool:
     """Check DNS records for a given domain in the local DNS cache."""
@@ -31,14 +29,22 @@ def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
     query = dns.message.make_query(domain, record_type)
     query.flags &= ~dns.flags.RD  # Recursion Not Desired
     response = dns.query.udp(query, '8.8.8.8', timeout = 3)
+    if response.answer:
+        print("HIT: Found in cache")
+    elif response.authority:
+        ask_resolver_to_iterate_until_found(domain, "NS")
+    else:
+        print("MISS: Not found in cache")
     print(f"Response from open resolver for {domain} ({record_type}):")
     print(response)
-    
+
+# def ask_resolver_to_iterate_until_found(domain: str, record_type: str) -> None:
+
 
 def main() -> None:
     domain = input("Enter the domain to check DNS records for: ")
-    found = check_dns_records(domain)
-    if not found:
+    foundInCache = check_dns_records(domain)
+    if not foundInCache:
         print(f"No relevant DNS records found for {domain}.")
         query_dns_record_to_open_resolver(domain, "A")
 

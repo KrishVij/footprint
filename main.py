@@ -1,8 +1,8 @@
 import subprocess
 
-def check_dns_records(domain:str) -> None:
+def check_dns_records(domain:str) -> bool:
+    """Check DNS records for a given domain in the local DNS cache."""
     subprocess.run('ipconfig /displaydns > "C:\\Users\\Krish Vij\\dns.txt"', text=True, shell = True)
-    found = False
     with open ("C:\\Users\\Krish Vij\\dns.txt", "r") as file:
         content = file.readlines()
         print("Checking DNS records in local cache...")
@@ -12,15 +12,19 @@ def check_dns_records(domain:str) -> None:
                 if "A" in content[content.index(line) + 15]:
                     print(f"Record type A found for {domain}")
                     print(content[content.index(line) + 15])
-                    found = True
-                    break
+                    return True
                 else:
                     print(f"No A record found for {domain}")
-                    break
+                    
+    return False
+
+#def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
 
 def main() -> None:
     domain = input("Enter the domain to check DNS records for: ")
-    check_dns_records(domain)
+    found = check_dns_records(domain)
+    if not found:
+        print(f"No relevant DNS records found for {domain}.")
 
 if __name__ == "__main__":
     main()

@@ -24,6 +24,10 @@ def check_dns_records(domain:str) -> bool:
     return False
 
 def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
+    """Query an open DNS resolver for a specific DNS record type.
+    Creates a DNS query message for the specified domain and record type, 
+    sends it to Google's public DNS server with recursion disabled,
+    and prints the response."""
     query = dns.message.make_query(domain, record_type)
     query.flags &= ~dns.flags.RD  # Recursion Not Desired
     response = dns.query.udp(query, '8.8.8.8', timeout = 3)

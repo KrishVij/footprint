@@ -2,6 +2,14 @@ import subprocess
 import dns.message
 import dns.flags
 import dns.query
+import dns.rdatatype
+import dns.resolver
+
+root_servers = [
+    "198.41.0.4",
+    "170.247.170.2",
+    "192.33.4.12",
+    ]
 
 def check_dns_records(domain:str) -> bool:
     """Check DNS records for a given domain in the local DNS cache."""
@@ -32,13 +40,61 @@ def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
     if response.answer:
         print("HIT: Found in cache")
     elif response.authority:
-        ask_resolver_to_iterate_until_found(domain, "NS")
+        ask_resolver_to_iterate_until_found(domain, record_type)
     else:
         print("MISS: Not found in cache")
     print(f"Response from open resolver for {domain} ({record_type}):")
     print(response)
+    print(response.answer)
+    print(response.authority)
 
-# def ask_resolver_to_iterate_until_found(domain: str, record_type: str) -> None:
+def ask_resolver_to_iterate_until_found(domain: str, record_type: str) -> None:
+    current_server = root_servers
+
+    while True:
+        query = dns.message.make_query(domain, record_type)
+        query.flags &= ~dns.flags.RD  # Recursion Not Desired
+
+        for server in current_server:
+            response = dns.query.udp(query, server, timeout=3)
+
+            if response.answer:
+                print("HIT: Found in cache")
+                print(f"Response from {server} for {domain} ({record_type}):")
+                print(response)
+                return
+            elif response.authority:
+                ns_servers_name = []
+                ns_servers_ip = []
+                for rrset in response.authority:
+                    if rrset.rdtype == dns.rdatatype.NS:
+                        for rr in rrset:
+                            ns_name = rr.target.to_text()
+                            ns_servers_name.append(ns_name)
+                for ns_name in ns_servers_name:
+                            try:
+                                ns_ip = dns.resolver.resolve(ns_name, 'A')[0].to_text()
+                                ns_servers_ip.append(ns_ip)
+                            except Exception as e:
+                                print(f"Could not resolve NS {ns_name}: {e}")
+                                continue
+                if not ns_servers_name:
+                    print("No NS records found in authority section.")
+                    return
+                current_server = ns_servers_ip
+                query = dns.message.make_query(domain, record_type)
+                query.flags &= ~dns.flags.RD  # Recursion Not Desired
+                for ns_server in ns_servers_ip:
+                    response = dns.query.udp(query, ns_server, timeout=3)
+                    if response.answer:
+                        print("HIT: Found in cache")
+                        print(f"Response from {server} for {domain} ({record_type}):")
+                        print(response)
+                        return
+                    elif response.authority:
+                        print("Continuing to next level of authority...")
+                    else:
+                        print("MISS: Not found in cache")
 
 
 def main() -> None:

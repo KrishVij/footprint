@@ -51,7 +51,11 @@ def query_dns_record_to_open_resolver(domain: str, record_type: str) -> None:
 def ask_resolver_to_iterate_until_found(domain: str, record_type: str) -> None:
     current_server = root_servers
 
-    while True:
+    while current_server:
+        if not current_server:
+            print(f"Could not resolve {domain} further.")
+            return
+        
         query = dns.message.make_query(domain, record_type)
         query.flags &= ~dns.flags.RD  # Recursion Not Desired
 
@@ -81,20 +85,24 @@ def ask_resolver_to_iterate_until_found(domain: str, record_type: str) -> None:
                 if not ns_servers_name:
                     print("No NS records found in authority section.")
                     return
+                # current_server = ns_servers_ip
+                # query = dns.message.make_query(domain, record_type)
+                # query.flags &= ~dns.flags.RD  # Recursion Not Desired
+                # for ns_server in ns_servers_ip:
+                #     response = dns.query.udp(query, ns_server, timeout=3)
+                #     if response.answer:
+                #         print("HIT: Found in cache")
+                #         print(f"Response from {server} for {domain} ({record_type}):")
+                #         print(response)
+                #         return
+                #     elif response.authority:
+                #         print("Continuing to next level of authority...")
+                #     else:
+                #         print("MISS: Not found in cache")
+                if not ns_servers_ip:
+                    print(f"Could not resolve {domain} further.")
+                    return
                 current_server = ns_servers_ip
-                query = dns.message.make_query(domain, record_type)
-                query.flags &= ~dns.flags.RD  # Recursion Not Desired
-                for ns_server in ns_servers_ip:
-                    response = dns.query.udp(query, ns_server, timeout=3)
-                    if response.answer:
-                        print("HIT: Found in cache")
-                        print(f"Response from {server} for {domain} ({record_type}):")
-                        print(response)
-                        return
-                    elif response.authority:
-                        print("Continuing to next level of authority...")
-                    else:
-                        print("MISS: Not found in cache")
 
 
 def main() -> None:
